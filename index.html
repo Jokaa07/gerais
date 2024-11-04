@@ -1,0 +1,275 @@
+<html><head><base href="/" /><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Estudo Interativo</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+:root {
+    --primary: #6c5ce7;
+    --secondary: #a8e6cf;
+    --accent: #ff8b94;
+    --background: #f8f9fa;
+    --text: #2d3436;
+}
+
+body {
+    background-color: var(--background);
+    color: var(--text);
+}
+
+.container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 2rem;
+}
+
+.study-tool {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    padding: 2rem;
+}
+
+.flashcard {
+    background: var(--secondary);
+    border-radius: 10px;
+    padding: 2rem;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    position: relative;
+    transform-style: preserve-3d;
+}
+
+.flashcard.flipped {
+    transform: rotateY(180deg);
+}
+
+.flashcard-front, .flashcard-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.flashcard-back {
+    background: var(--accent);
+    transform: rotateY(180deg);
+    border-radius: 10px;
+}
+
+.controls {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.btn {
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 5px;
+    background: var(--primary);
+    color: white;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+}
+
+.progress {
+    margin-top: 2rem;
+    background: #ddd;
+    height: 10px;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: var(--primary);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.stats {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 2rem;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary);
+}
+
+.answer-input {
+    width: 100%;
+    padding: 1rem;
+    margin: 1rem 0;
+    border: 2px solid var(--primary);
+    border-radius: 5px;
+    font-size: 1rem;
+}
+
+.feedback {
+    text-align: center;
+    margin: 1rem 0;
+    padding: 1rem;
+    border-radius: 5px;
+    display: none;
+}
+
+.feedback.correct {
+    background: #a8e6cf;
+    color: #2d3436;
+    display: block;
+}
+
+.feedback.incorrect {
+    background: #ff8b94;
+    color: #2d3436;
+    display: block;
+}
+</style>
+</head>
+<body>
+    <div class="container">
+        <div class="study-tool">
+            <div class="flashcard">
+                <div class="flashcard-front">Clique para ver a resposta</div>
+                <div class="flashcard-back">Resposta aqui</div>
+            </div>
+            <input type="text" class="answer-input" placeholder="Digite sua resposta aqui" id="userAnswer">
+            <div class="feedback" id="feedback">Feedback aparecerá aqui</div>
+            <div class="controls">
+                <button class="btn" id="checkAnswer">Verificar Resposta</button>
+                <button class="btn" id="prevCard">Anterior</button>
+                <button class="btn" id="nextCard">Próximo</button>
+            </div>
+            <div class="progress">
+                <div class="progress-bar"></div>
+            </div>
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalCards">0</div>
+                    <div class="stat-label">Total de Cards</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="correctAnswers">0</div>
+                    <div class="stat-label">Respostas Corretas</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+const flashcards = [
+    { question: "Qual é a capital do Brasil?", answer: "Brasília" },
+    { question: "Qual é o maior planeta do sistema solar?", answer: "Júpiter" },
+    { question: "Quem escreveu Dom Casmurro?", answer: "Machado de Assis" },
+    { question: "Qual é o símbolo químico do ouro?", answer: "Au" },
+    { question: "Em que ano o homem pisou na Lua pela primeira vez?", answer: "1969" }
+];
+
+let currentCardIndex = 0;
+let correctAnswers = 0;
+
+const flashcardElement = document.querySelector('.flashcard');
+const progressBar = document.querySelector('.progress-bar');
+const totalCardsElement = document.getElementById('totalCards');
+const correctAnswersElement = document.getElementById('correctAnswers');
+const userAnswerInput = document.getElementById('userAnswer');
+const feedbackElement = document.getElementById('feedback');
+
+function updateCard() {
+    const currentCard = flashcards[currentCardIndex];
+    const frontElement = document.querySelector('.flashcard-front');
+    const backElement = document.querySelector('.flashcard-back');
+    
+    frontElement.textContent = currentCard.question;
+    backElement.textContent = currentCard.answer;
+    
+    flashcardElement.classList.remove('flipped');
+    userAnswerInput.value = '';
+    feedbackElement.className = 'feedback';
+    updateProgress();
+}
+
+function updateProgress() {
+    const progress = ((currentCardIndex + 1) / flashcards.length) * 100;
+    progressBar.style.width = `${progress}%`;
+    totalCardsElement.textContent = flashcards.length;
+    correctAnswersElement.textContent = correctAnswers;
+}
+
+function checkAnswer() {
+    const currentCard = flashcards[currentCardIndex];
+    const userAnswer = userAnswerInput.value.trim().toLowerCase();
+    const correctAnswer = currentCard.answer.toLowerCase();
+
+    if (userAnswer === correctAnswer) {
+        feedbackElement.textContent = "Correto! Muito bem!";
+        feedbackElement.className = 'feedback correct';
+        if (!flashcardElement.classList.contains('flipped')) {
+            correctAnswers++;
+            correctAnswersElement.textContent = correctAnswers;
+        }
+        flashcardElement.classList.add('flipped');
+    } else {
+        feedbackElement.textContent = "Incorreto. Tente novamente!";
+        feedbackElement.className = 'feedback incorrect';
+    }
+}
+
+flashcardElement.addEventListener('click', () => {
+    flashcardElement.classList.toggle('flipped');
+});
+
+document.getElementById('checkAnswer').addEventListener('click', checkAnswer);
+
+document.getElementById('nextCard').addEventListener('click', () => {
+    if (currentCardIndex < flashcards.length - 1) {
+        currentCardIndex++;
+        updateCard();
+    }
+});
+
+document.getElementById('prevCard').addEventListener('click', () => {
+    if (currentCardIndex > 0) {
+        currentCardIndex--;
+        updateCard();
+    }
+});
+
+userAnswerInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        checkAnswer();
+    }
+});
+
+// Inicialização
+updateCard();
+</script>
+</body></html>
